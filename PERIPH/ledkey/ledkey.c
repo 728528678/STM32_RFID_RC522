@@ -1,6 +1,6 @@
 #include "ledkey.h"
 #include "delay.h"
-#include "lcd.h"
+
 
 
 //LEDBEEP初始化
@@ -13,9 +13,12 @@ void led_init(void)
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_13;
 	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;//设置输出频率
 	GPIO_Init(GPIOC,&GPIO_InitStructure);//板载LED
+	LED_R = 1;
+	LED_G = 1;
 	
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_0 | GPIO_Pin_1;
 	GPIO_Init(GPIOA,&GPIO_InitStructure);//外部LED0 LED1
+	LED_DATA = 1;
 }
 
 

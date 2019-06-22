@@ -3,7 +3,6 @@
 #include "ledkey.h"
 #include "usart.h"
 #include "rc522.h"
-#include "lcd.h"
 #include "stdio.h"
 
 /************************************************
@@ -44,24 +43,29 @@ unsigned char DefaultValue[16]={//数值块4初始化0x00000000
 0xfb //地址反码
 };
 
-const u8 User_Key[16][6]={
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xD0,0x7D,0xA5,0x54,0xDD,0xD0},
-{0xD0,0x7D,0xA5,0x54,0xDD,0xD0},
-{0xD0,0x7D,0xA5,0x54,0xDD,0xD0},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff},
-{0xff,0xff,0xff,0xff,0xff,0xff}
+u8 User_Key[16][6]={
+{0xff,0xff,0xff,0xff,0xff,0xff},//0
+{0x58,0x04,0x5D,0x74,0x09,0xFE},//1
+{0x58,0x04,0x5D,0x74,0x09,0xFE},//2
+{0x58,0x04,0x5D,0x74,0x09,0xFE},//3
+{0x10,0x11,0x12,0x13,0x14,0x15},//4
+{0xff,0xff,0xff,0xff,0xff,0xff},//5
+{0xF9,0xE2,0xEF,0xB4,0x78,0xCD},//6
+{0xff,0xff,0xff,0xff,0xff,0xff},//7
+{0xff,0xff,0xff,0xff,0xff,0xff},//8
+{0x2F,0x4D,0x1A,0xA8,0x3A,0xCC},//9
+{0xff,0xff,0xff,0xff,0xff,0xff},//10
+{0xff,0xff,0xff,0xff,0xff,0xff},//11
+{0xff,0xff,0xff,0xff,0xff,0xff},//12
+{0xff,0xff,0xff,0xff,0xff,0xff},//13
+{0xff,0xff,0xff,0xff,0xff,0xff},//14
+{0xff,0xff,0xff,0xff,0xff,0xff}//15
 };
+
+//除去密码位，其他扇区全部数据
+#define SECTION_NUM	16*3
+#define DATA_NUM 	16
+u8 Card_Data[SECTION_NUM][DATA_NUM]={0};
 
 unsigned char value_Buf[4]={0x01,0x00,0x00,0x00};//增减量
 unsigned char Write_Buffer[16]={//修改密码A
@@ -90,36 +94,42 @@ void BeiFen(unsigned char sourceaddr_p,unsigned char goaladdr_p);//备份钱包
 void hhh(void);
 u8 Auto_Reader(void);
 void Change_UID(void);
-				 
+u8 Copy_ICdate(void);
+		   
 int main(void)
 {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//中断管理分组设置
 	delay_init();
 	led_init();
 	key_init();
-	
 	usart1_init(9600);
 	usart1_sendstring("USART_INITOK\r\n");
 
 	RFIDGPIO_Init();
 	delay_ms(10);
 	while(1)
-	{	
+	{
+		LED_R = 0;
+		LED_G = 1;
+		delay_ms(500);
+		LED_G = 0;
+		LED_R = 1;
+		delay_ms(500);
 		
-		if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)
+		if(Copy_ICdate() ==1)
 		{
-			PCout(13) = 0;
-			PAout()
+			LED_DATA = 0;
 			delay_ms(100);
 		}
 		else
 		{
-			PCout(13) = 1;
+			LED_DATA = 1;
 			delay_ms(100);
 		}
 		
 	}
 }
+
 //将数组里的数据发送到串口(字符型)
 void Printing(unsigned char* Buffer,unsigned short len)
 {
@@ -483,22 +493,22 @@ void Change_UID(void)
 	unsigned int  unLen;
 	unsigned char ucComMF522Buf[MAXRLEN];
 	unsigned char bcc,block0_buffer[18]={0};
-//	if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)
-//	{
-//		if(PcdAuthState(PICC_AUTHENT1A,0,Default_Key,Card_ID)==MI_OK)
-//		{
-//			if(PcdRead(0,ucComMF522Buf) == MI_OK)
-//			{
-//				for(i=0;i<16;i++)
-//				{
-//					block0_buffer[i] = ucComMF522Buf[i];
-//				}
-//				CalulateCRC(ucComMF522Buf,16,&block0_buffer[16]);
-//				PcdReset();     //RC522初始化
-//				PcdAntennaOff();//关天线
-//				delay_ms(1);    
-//				PcdAntennaOn(); //开天线
-//				delay_ms(200);
+	if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)//寻卡，防冲撞，选卡
+	{
+		if(PcdAuthState(PICC_AUTHENT1A,0,Default_Key,Card_ID)==MI_OK)//验证密钥
+		{
+			if(PcdRead(0,ucComMF522Buf) == MI_OK)//读一区块数据
+			{
+				for(i=0;i<16;i++)
+				{
+					block0_buffer[i] = ucComMF522Buf[i];
+				}
+				CalulateCRC(ucComMF522Buf,16,&block0_buffer[16]);
+				PcdReset();     //RC522初始化
+				PcdAntennaOff();//关天线
+				delay_ms(1);    
+				PcdAntennaOn(); //开天线
+				delay_ms(200);
 				block0_buffer[0] = 0x33;
 				if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)
 				{
@@ -525,12 +535,44 @@ void Change_UID(void)
 						}
 					}
 				}
-//			}
-//		}
-//	}
+			}
+		}
+	}
 }
 
+//按照默认密钥读取IC卡数据
+void Read_ICdata(void)
+{
+	u8 i,j;
+	for(i=0;i<16;i++)//16扇区
+	{
+		j=0;
+		if(PcdAuthState(PICC_AUTHENT1A,i*4,&User_Key[i][0],Card_ID)==MI_OK)//验证i扇区的A密钥
+		{
+			for(j=0;j<3;j++)//除密钥还剩3区块
+			{
+				if(PcdRead(i*4+j,&Card_Data[i*3+j][0]) == MI_OK)
+				{
+					
+				}
+				else
+				{
+					
+				}
+			}
+		}
+		
+	}
+	
+}
+
+//复制除ID外所有数据
 u8 Copy_ICdate(void)
 {
-	
+	if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)//寻卡，防冲撞，选卡
+	{
+		Read_ICdata();
+		return 1;
+	}
+	return 0;
 }

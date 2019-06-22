@@ -470,11 +470,6 @@
           <GroupName>PERIPH</GroupName>
           <Files>
             <File>
-              <FileName>lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\PERIPH\LCD\lcd.c</FilePath>
-            </File>
-            <File>
               <FileName>ledkey.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\PERIPH\ledkey\ledkey.c</FilePath>
