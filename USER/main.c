@@ -45,15 +45,15 @@ unsigned char DefaultValue[16]={//数值块4初始化0x00000000
 
 u8 User_Key[16][6]={
 {0xff,0xff,0xff,0xff,0xff,0xff},//0
-{0x58,0x04,0x5D,0x74,0x09,0xFE},//1
-{0x58,0x04,0x5D,0x74,0x09,0xFE},//2
-{0x58,0x04,0x5D,0x74,0x09,0xFE},//3
-{0x10,0x11,0x12,0x13,0x14,0x15},//4
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0x58,0x04,0x5D,0x74,0x09,0xFE},//1
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0x58,0x04,0x5D,0x74,0x09,0xFE},//2
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0x58,0x04,0x5D,0x74,0x09,0xFE},//3
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0x10,0x11,0x12,0x13,0x14,0x15},//4
 {0xff,0xff,0xff,0xff,0xff,0xff},//5
-{0xF9,0xE2,0xEF,0xB4,0x78,0xCD},//6
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0xF9,0xE2,0xEF,0xB4,0x78,0xCD},//6
 {0xff,0xff,0xff,0xff,0xff,0xff},//7
 {0xff,0xff,0xff,0xff,0xff,0xff},//8
-{0x2F,0x4D,0x1A,0xA8,0x3A,0xCC},//9
+{0xff,0xff,0xff,0xff,0xff,0xff},//{0x2F,0x4D,0x1A,0xA8,0x3A,0xCC},//9
 {0xff,0xff,0xff,0xff,0xff,0xff},//10
 {0xff,0xff,0xff,0xff,0xff,0xff},//11
 {0xff,0xff,0xff,0xff,0xff,0xff},//12
@@ -95,6 +95,8 @@ void hhh(void);
 u8 Auto_Reader(void);
 void Change_UID(void);
 u8 Copy_ICdate(void);
+u8 Write_ICdata(void);
+u8 Key_Flag = 0;
 		   
 int main(void)
 {
@@ -109,23 +111,47 @@ int main(void)
 	delay_ms(10);
 	while(1)
 	{
-		LED_R = 0;
-		LED_G = 1;
-		delay_ms(500);
-		LED_G = 0;
-		LED_R = 1;
-		delay_ms(500);
+		Key_Flag = Read_Key();
+		if(Key_Flag == 1)//写卡
+		{
+			Key_Flag = 0;
+			if(Write_ICdata() == 1)//写卡成功
+			{
+				LED_G = 0;
+				LED_R = 1;
+			}
+			else
+			{
+				LED_G = 1;
+				LED_R = 0;
+			}
+		}
+		else if(Key_Flag == 2)//读卡
+		{
+			Key_Flag = 0;
+			if(Copy_ICdate() == 1)//读卡成功
+			{
+				LED_G = 0;
+				LED_R = 1;
+			}
+			else
+			{
+				LED_G = 1;
+				LED_R = 0;
+			}
+		}
 		
-		if(Copy_ICdate() ==1)
-		{
-			LED_DATA = 0;
-			delay_ms(100);
-		}
-		else
-		{
-			LED_DATA = 1;
-			delay_ms(100);
-		}
+		
+//		if(Copy_ICdate() ==1)
+//		{
+//			LED_DATA = 0;
+//			delay_ms(100);
+//		}
+//		else
+//		{
+//			LED_DATA = 1;
+//			delay_ms(100);
+//		}
 		
 	}
 }
@@ -541,7 +567,7 @@ void Change_UID(void)
 }
 
 //按照默认密钥读取IC卡数据
-void Read_ICdata(void)
+u8 Read_ICdata(void)
 {
 	u8 i,j;
 	for(i=0;i<16;i++)//16扇区
@@ -553,26 +579,69 @@ void Read_ICdata(void)
 			{
 				if(PcdRead(i*4+j,&Card_Data[i*3+j][0]) == MI_OK)
 				{
-					
+					delay_ms(15);
+					LED_G = 0;
+					delay_ms(20);
+					LED_G = 1;
 				}
 				else
 				{
-					
+					return 0;
 				}
 			}
 		}
-		
+		else
+		{
+			return 0;//失败
+		}
 	}
-	
+	return 1;
 }
 
-//复制除ID外所有数据
+u8 Write_ICdata(void)
+{
+	u8 i,j;
+	if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)//寻卡，防冲撞，选卡
+	{
+		for(i=1;i<16;i++)//16扇区
+		{
+			j=0;
+			if(PcdAuthState(PICC_AUTHENT1A,i*4,&User_Key[i][0],Card_ID)==MI_OK)//验证i扇区的A密钥
+			{
+				for(j=0;j<3;j++)//除密钥还剩3区块
+				{
+					if(PcdWrite(i*4+j,&Card_Data[i*3+j][0]) == MI_OK)
+					{
+						delay_ms(15);
+						LED_G = 0;
+						delay_ms(20);
+						LED_G = 1;
+					}
+					else
+					{
+						return 0;
+					}
+				}
+			}
+			else
+			{
+				return 0;//失败
+			}
+		}
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//复制除ID外所有数据到Card_Buffer数组
 u8 Copy_ICdate(void)
 {
 	if(Request_Anticoll_Select(PICC_REQALL,Card_Type,Card_Buffer,Card_ID)==MI_OK)//寻卡，防冲撞，选卡
 	{
-		Read_ICdata();
-		return 1;
+		return Read_ICdata();
 	}
 	return 0;
 }

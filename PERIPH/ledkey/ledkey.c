@@ -33,3 +33,24 @@ void key_init(void)
 	GPIO_Init(GPIOA,&GPIO_InitStructure);//key1 key2
 }
 
+u8 Read_Key(void)
+{
+	if(KEY0 == 0)
+	{
+		delay_ms(10);
+		if(KEY0==0)
+		{
+			return 1;
+		}
+	}
+	else if(KEY1 == 0)
+	{
+		delay_ms(10);
+		if(KEY1==0)
+		{
+			return 2;
+		}
+	}
+	return 0;
+}
+

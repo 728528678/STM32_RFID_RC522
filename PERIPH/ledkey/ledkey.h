@@ -12,14 +12,12 @@
 #define BEEP_SET GPIO_SetBits(GPIOB,GPIO_Pin_8)
 #define BEEP_CLR GPIO_ResetBits(GPIOB,GPIO_Pin_8)
 //宏定义读取按键输入值
-#define KEY0 GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_4)
-#define KEY1 GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_3)
-#define KEY2 GPIO_ReadInputDataBit(GPIOE,GPIO_Pin_2)
-#define KEY_UP GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)
+#define KEY0 PAin(2)	//写
+#define KEY1 PAin(3)	//读
 
 extern unsigned char mode_flag;//对卡操作模式
 
 void led_init(void);//LEDBEEP初始化
 void key_init(void);//按键初始化函数
-void key(void);//按键函数
+u8 Read_Key(void);
 #endif
