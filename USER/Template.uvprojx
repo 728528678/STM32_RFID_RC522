@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\PERIPH\LCD;..\PERIPH\ledkey;..\PERIPH\RFID;..\PERIPH\usart;..\SYSTEM\sys;..\PERIPH\spi</IncludePath>
+              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\delay;..\PERIPH\LCD;..\PERIPH\ledkey;..\PERIPH\RFID;..\SYSTEM\usart;..\SYSTEM\sys;..\PERIPH\spi</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -409,6 +409,11 @@
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\sys\sys.c</FilePath>
             </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SYSTEM\usart\usart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -478,11 +483,6 @@
               <FileName>rc522.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\PERIPH\RFID\rc522.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\PERIPH\usart\usart.c</FilePath>
             </File>
             <File>
               <FileName>spi.c</FileName>

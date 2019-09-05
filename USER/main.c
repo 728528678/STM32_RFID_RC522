@@ -1,22 +1,21 @@
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  ** Author	:Lin
+  *	 Email	:ljb728528678@qq.com
+  *
+  *
+  ******************************************************************************
+  */
+
 #include "stm32f10x.h"
 #include "delay.h"
 #include "ledkey.h"
 #include "usart.h"
 #include "rc522.h"
-#include "stdio.h"
 
-/************************************************
-RFID_RC522
-20180430
-************************************************/
-
-int fputc(int ch,FILE *f)
-{
-	USART_SendData(USART1,(u8)ch);
-	while(USART_GetFlagStatus(USART1,USART_FLAG_TXE)==RESET);
-	//把USART_FLAG_TC改为USART_FLAG_TXE解决用printf发送字符串时时不能发送第一位
-	return ch;
-}
 
 
 unsigned char Block=0;
@@ -97,7 +96,7 @@ void Change_UID(void);
 u8 Copy_ICdate(void);
 u8 Write_ICdata(void);
 u8 Key_Flag = 0;
-		   
+
 int main(void)
 {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//中断管理分组设置
@@ -142,18 +141,6 @@ int main(void)
 				LED_DATA = 1;
 			}
 		}
-		
-		
-//		if(Copy_ICdate() ==1)
-//		{
-//			LED_DATA = 0;
-//			delay_ms(100);
-//		}
-//		else
-//		{
-//			LED_DATA = 1;
-//			delay_ms(100);
-//		}
 		
 	}
 }
